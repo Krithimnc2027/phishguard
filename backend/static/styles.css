@@ -1,0 +1,101 @@
+:root {
+  --bg: #0f1419;
+  --panel: #1a2129;
+  --panel-2: #222b35;
+  --border: #2c3845;
+  --text: #e6edf3;
+  --muted: #8b98a5;
+  --accent: #3b82f6;
+  --green: #2ea043;
+  --amber: #d29922;
+  --red: #f85149;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  padding: 18px 28px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+header h1 { margin: 0; font-size: 22px; }
+.subtitle { color: var(--muted); font-size: 13px; }
+
+main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 22px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+h2, h3 { margin-top: 0; }
+
+.scan-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+#urlInput {
+  flex: 1 1 380px;
+  padding: 11px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+.intel-toggle { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+button {
+  padding: 11px 22px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: .5; cursor: wait; }
+
+.result { margin-top: 16px; padding: 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); }
+.result.hidden { display: none; }
+.verdict-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 13px; text-transform: uppercase; }
+.verdict-phishing { background: rgba(248,81,73,.18); color: var(--red); }
+.verdict-suspicious { background: rgba(210,153,34,.18); color: var(--amber); }
+.verdict-legitimate { background: rgba(46,160,67,.18); color: var(--green); }
+.risk-bar { height: 8px; border-radius: 4px; background: var(--border); margin: 10px 0; overflow: hidden; }
+.risk-fill { height: 100%; }
+.reason-list { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.intel-pre { background: #0b0f14; padding: 10px; border-radius: 6px; font-size: 12px; overflow-x: auto; color: #9fb3c8; margin-top: 10px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.stat { text-align: center; }
+.stat-num { font-size: 30px; font-weight: 700; }
+.stat.phishing .stat-num { color: var(--red); }
+.stat.suspicious .stat-num { color: var(--amber); }
+.stat.legit .stat-num { color: var(--green); }
+
+.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.chart-card canvas { max-height: 240px; }
+.metrics-box { font-size: 13px; line-height: 1.9; }
+.metrics-box b { color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+td.url-cell { max-width: 280px; word-break: break-all; font-family: monospace; font-size: 12px; }
+.mini-badge { padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+a.report-link { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+@media (max-width: 760px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts { grid-template-columns: 1fr; }
+}

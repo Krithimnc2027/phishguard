@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishGuard — Analyst Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>🛡️ PhishGuard</h1>
+    <span class="subtitle">ML-Powered Phishing URL Detection &middot; Analyst Console</span>
+  </header>
+
+  <main>
+    <section class="scan-panel">
+      <h2>Scan a URL</h2>
+      <div class="scan-row">
+        <input id="urlInput" type="text" placeholder="https://example.com/login..." />
+        <label class="intel-toggle">
+          <input type="checkbox" id="intelToggle" /> Live threat intel (WHOIS/DNS/URLhaus)
+        </label>
+        <button id="scanBtn">Scan</button>
+      </div>
+      <div id="result" class="result hidden"></div>
+    </section>
+
+    <section class="stats-grid">
+      <div class="card stat"><div class="stat-num" id="statTotal">0</div><div>Total scans</div></div>
+      <div class="card stat phishing"><div class="stat-num" id="statPhish">0</div><div>Phishing</div></div>
+      <div class="card stat suspicious"><div class="stat-num" id="statSusp">0</div><div>Suspicious</div></div>
+      <div class="card stat legit"><div class="stat-num" id="statLegit">0</div><div>Legitimate</div></div>
+    </section>
+
+    <section class="charts">
+      <div class="card chart-card">
+        <h3>Risk distribution</h3>
+        <canvas id="riskChart"></canvas>
+      </div>
+      <div class="card chart-card">
+        <h3>Model performance</h3>
+        <div id="metricsBox" class="metrics-box">loading…</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Scan history</h3>
+      <table id="historyTable">
+        <thead>
+          <tr><th>Time</th><th>URL</th><th>Verdict</th><th>Risk</th><th>Reasons</th><th>Report</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
