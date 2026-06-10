@@ -78,33 +78,63 @@ def gen_legit() -> str:
     return f"{scheme}://{sub}{dom}{path}"
 
 
+def _rand_word_token(n_min=4, n_max=9):
+    """A digit-free lowercase token. Used so the model can't lean on 'has
+    digits' as a phishing shortcut."""
+    n = random.randint(n_min, n_max)
+    return "".join(random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(n))
+
+
+# Plausible-looking TLDs that are NOT on the abusive list — so the model can't
+# rely on 'suspicious_tld' alone. Real phishing increasingly uses these.
+NEUTRAL_TLDS = ["com", "net", "org", "info", "site", "online", "co"]
+
+
 def gen_phish() -> str:
     style = random.random()
     brand = random.choice(BRANDS)
     word = random.choice(PHISH_WORDS)
+    word2 = random.choice(PHISH_WORDS)
+    # Most modern phishing is served over HTTPS — don't make http a giveaway.
+    scheme = "https" if random.random() < 0.7 else "http"
 
-    if style < 0.25:
+    if style < 0.18:
         # Brand buried in a long subdomain chain on an abusive TLD.
         tld = random.choice(PHISH_TLDS)
         host = f"{brand}.com-{word}.{_rand_token()}.{tld}"
-        return f"http://{host}/{word}?cmd=_update&dispatch={_rand_token()}"
-    if style < 0.45:
-        # Raw IP host (no domain registration needed).
+        return f"{scheme}://{host}/{word}?cmd=_update&dispatch={_rand_token()}"
+    if style < 0.34:
+        # Raw IP host (no domain registration needed). Always http in practice.
         ip = ".".join(str(random.randint(1, 255)) for _ in range(4))
         port = "" if random.random() < 0.5 else f":{random.choice([8080, 8000, 8443, 443])}"
         return f"http://{ip}{port}/{brand}/{word}/index.php?id={_rand_token()}"
-    if style < 0.65:
+    if style < 0.48:
         # URL shortener hiding the destination.
         sh = random.choice(SHORTENERS)
-        return f"http://{sh}/{_rand_token(5, 8)}"
-    if style < 0.82:
+        return f"{scheme}://{sh}/{_rand_token(5, 8)}"
+    if style < 0.60:
         # @-redirect trick: real-looking text before @, attacker host after.
         tld = random.choice(PHISH_TLDS)
-        return f"http://{brand}.com@{_rand_token()}.{tld}/{word}-{word}/"
-    # Typosquat with hyphens and suspicious words on a cheap TLD.
-    tld = random.choice(PHISH_TLDS)
-    host = f"{brand}-{word}-{_rand_token(3, 6)}.{tld}"
-    return f"http://{host}/{word}/{word}.html?token={_rand_token()}"
+        return f"{scheme}://{brand}.com@{_rand_token()}.{tld}/{word}-{word2}/"
+    if style < 0.72:
+        # Typosquat with hyphens and suspicious words on a cheap TLD.
+        tld = random.choice(PHISH_TLDS)
+        host = f"{brand}-{word}-{_rand_token(3, 6)}.{tld}"
+        return f"{scheme}://{host}/{word}/{word}.html?token={_rand_token()}"
+
+    # --- "stealthy" styles: HTTPS, digit-free, plausible TLD, no IP/@/shortener.
+    # These are the cases the cruder rules miss; the model must learn that deep
+    # subdomain chains + keyword density are themselves the signal.
+    if style < 0.86:
+        # Deep subdomain spoof where the brand is a SUBDOMAIN, not the domain.
+        # e.g. login.update.secure.paypal.com.verify-account.site/auth
+        attacker = f"{_rand_word_token()}-{word2}.{random.choice(NEUTRAL_TLDS)}"
+        return (f"https://{word}.{word2}.secure.{brand}.com.{attacker}/"
+                f"{word}/{word2}")
+    # Long keyword-stuffed subdomain chain on a neutral TLD, https, no digits.
+    tld = random.choice(NEUTRAL_TLDS)
+    host = f"{word}-{word2}.{brand}-{_rand_word_token(4,7)}.{tld}"
+    return f"https://{host}/{word}/{word2}/{_rand_word_token()}"
 
 
 def build_synthetic(n_per_class=6000):
