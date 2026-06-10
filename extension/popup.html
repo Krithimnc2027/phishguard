@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { width: 300px; margin: 0; font-family: -apple-system, "Segoe UI", sans-serif;
+           background: #0f1419; color: #e6edf3; }
+    .head { padding: 12px 14px; background: #1a2129; border-bottom: 1px solid #2c3845;
+            font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .body { padding: 14px; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px;
+             font-weight: 700; font-size: 12px; text-transform: uppercase; }
+    .phishing { background: rgba(248,81,73,.18); color: #f85149; }
+    .suspicious { background: rgba(210,153,34,.18); color: #d29922; }
+    .legitimate { background: rgba(46,160,67,.18); color: #2ea043; }
+    .error { background: rgba(139,152,165,.18); color: #8b98a5; }
+    .host { font-family: monospace; font-size: 12px; color: #8b98a5; margin: 8px 0; word-break: break-all; }
+    .bar { height: 6px; border-radius: 3px; background: #2c3845; margin: 10px 0; overflow: hidden; }
+    .fill { height: 100%; }
+    ul { margin: 8px 0 0; padding-left: 18px; font-size: 12px; color: #8b98a5; }
+    button { width: 100%; margin-top: 12px; padding: 8px; background: #3b82f6; color: #fff;
+             border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .open-dash { display: block; text-align: center; margin-top: 8px; color: #3b82f6;
+                 font-size: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="head">🛡️ PhishGuard</div>
+  <div class="body" id="body">Checking…</div>
+  <script src="popup.js"></script>
+</body>
+</html>
