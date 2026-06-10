@@ -1,0 +1,15 @@
+# PhishGuard — Python dependencies
+# ML / data
+scikit-learn>=1.3
+xgboost>=2.0
+pandas>=2.0
+numpy>=1.24
+joblib>=1.3
+# Backend API
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.0
+# Threat intelligence
+requests>=2.31
+python-whois>=0.9
+dnspython>=2.4
