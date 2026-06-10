@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+# generated artifacts (reproducible via generate_dataset.py + train.py)
+ml/dataset.csv
+ml/model.joblib
+ml/metrics.json
+ml/data/
+backend/phishguard.db
