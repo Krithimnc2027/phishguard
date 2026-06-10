@@ -4,10 +4,12 @@ An ML-powered phishing URL detector with a live threat-intelligence layer, a
 FastAPI backend, an analyst dashboard, and a Chrome extension for real-time
 protection.
 
-The idea is the one from the project brief: static blacklists miss freshly
-registered phishing domains, so instead of matching against a list, PhishGuard
-learns the *structure* of phishing URLs and combines that with live reputation
-checks the way a SOC analyst would.
+Built by Kota Sai Krithi.
+
+The idea: static blacklists miss freshly registered phishing domains, so
+instead of matching against a list, PhishGuard learns the *structure* of
+phishing URLs and combines that with live reputation checks the way a SOC
+analyst would.
 
 ## How it fits together
 
