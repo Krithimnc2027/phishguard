@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
+venv/
+.venv/
 # generated artifacts (reproducible via generate_dataset.py + train.py)
 ml/dataset.csv
 ml/model.joblib

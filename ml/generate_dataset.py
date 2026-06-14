@@ -40,14 +40,44 @@ LEGIT_DOMAINS = [
     "dropbox.com", "adobe.com", "zoom.us", "slack.com", "shopify.com",
     "wordpress.com", "medium.com", "quora.com", "imdb.com", "espn.com",
     "bankofamerica.com", "chase.com", "wellsfargo.com", "hdfcbank.com", "sbi.co.in",
+    "leetcode.com", "geeksforgeeks.org", "kaggle.com", "gitlab.com", "atlassian.net",
+    "notion.so", "figma.com", "canva.com", "coursera.org", "udemy.com",
 ]
 
-LEGIT_PATHS = [
-    "", "/", "/about", "/contact", "/products", "/help/faq", "/blog/2026/spring",
-    "/search?q=python", "/user/profile", "/watch?v=dQw4w9WgXcQ", "/news/world",
-    "/docs/getting-started", "/account/settings", "/cart", "/login", "/signup",
-    "/p/12345", "/category/electronics", "/articles/how-to-code", "/support",
+# Institutional / multi-part-suffix domains. Real universities and government
+# sites legitimately use deep subdomains, so the model must NOT treat depth
+# alone as phishing.
+LEGIT_INSTITUTIONAL = [
+    "iith.ac.in", "iitb.ac.in", "iisc.ac.in", "du.ac.in", "anna.edu.in",
+    "ox.ac.uk", "cam.ac.uk", "mit.edu", "stanford.edu", "berkeley.edu",
+    "nic.in", "gov.in", "rbi.org.in", "incometax.gov.in",
 ]
+
+# Subdomains real sites use — including security-flavoured ones (accounts.,
+# login., secure.) so the model learns these words are NOT phishing by themselves.
+LEGIT_SUBDOMAINS = [
+    "www", "m", "shop", "mail", "blog", "docs", "drive", "app", "api",
+    "support", "help", "accounts", "login", "secure", "my", "portal", "dev",
+]
+
+# Realistic slug words for long, hyphenated legit paths (e.g. blog/article URLs).
+SLUG_WORDS = [
+    "how", "to", "build", "guide", "best", "practices", "getting", "started",
+    "introduction", "complete", "tutorial", "cheapest", "flights", "within",
+    "k", "stops", "system", "design", "interview", "questions", "data",
+    "structures", "algorithms", "spring", "boot", "react", "python", "deep",
+    "learning", "annual", "report", "2026", "release", "notes",
+]
+
+
+def _rand_id(n=22):
+    """A document/object id like the ones in Google Docs / Drive / Notion URLs."""
+    chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+    return "".join(random.choice(chars) for _ in range(n))
+
+
+def _slug():
+    return "-".join(random.choice(SLUG_WORDS) for _ in range(random.randint(2, 6)))
 
 BRANDS = ["paypal", "apple", "amazon", "microsoft", "google", "netflix",
           "facebook", "instagram", "chase", "wellsfargo", "hdfc", "sbi",
@@ -69,13 +99,68 @@ def _rand_token(n_min=4, n_max=12):
 
 
 def gen_legit() -> str:
-    dom = random.choice(LEGIT_DOMAINS)
-    scheme = "https" if random.random() < 0.9 else "http"
-    sub = ""
-    if random.random() < 0.3:
-        sub = random.choice(["www.", "www.", "m.", "shop.", "mail.", "blog."])
-    path = random.choice(LEGIT_PATHS)
-    return f"{scheme}://{sub}{dom}{path}"
+    """Generate a realistic legitimate URL.
+
+    Crucially these are NOT all short and clean: real legit URLs are often long,
+    deeply nested, hyphenated, full of query params, and use words like 'login'
+    or 'secure'. Earlier the synthetic legit URLs were trivially short, so the
+    model learned "long/deep/has-query == phishing" and flagged real Google
+    Docs / LeetCode / university URLs. These styles fix that.
+    """
+    style = random.random()
+
+    # Almost always https for legit traffic.
+    scheme = "https" if random.random() < 0.97 else "http"
+
+    if style < 0.20:
+        # Short, clean homepage-ish URL (still keep some of these).
+        dom = random.choice(LEGIT_DOMAINS)
+        sub = (random.choice(LEGIT_SUBDOMAINS) + ".") if random.random() < 0.4 else ""
+        path = random.choice(["", "/", "/about", "/contact", "/pricing", "/help"])
+        return f"{scheme}://{sub}{dom}{path}"
+
+    if style < 0.40:
+        # Document / drive style: long opaque id + query (Google Docs, Notion).
+        dom = random.choice(["docs.google.com", "drive.google.com", "notion.so",
+                             "dropbox.com", "figma.com"])
+        kind = random.choice(["document", "spreadsheets", "presentation", "file/d", "d"])
+        return f"{scheme}://{dom}/{kind}/d/{_rand_id(random.randint(28, 44))}/edit?tab=t.0"
+
+    if style < 0.58:
+        # Deep hyphenated content path with a numeric id (LeetCode, blogs, news).
+        dom = random.choice(["leetcode.com", "geeksforgeeks.org", "medium.com",
+                             "nytimes.com", "stackoverflow.com", "github.com"])
+        return (f"{scheme}://{dom}/{random.choice(['problems', 'articles', 'questions', 'blog'])}/"
+                f"{_slug()}/{random.choice(['submissions/', '', 'comments/'])}"
+                f"{random.randint(100000, 99999999)}/")
+
+    if style < 0.72:
+        # E-commerce / search with a real query string (lots of params + digits).
+        dom = random.choice(["amazon.com", "ebay.com", "google.com", "shopify.com"])
+        return (f"{scheme}://www.{dom}/{random.choice(['search', 's', 'product', 'dp'])}"
+                f"?q={_slug()}&page={random.randint(1, 9)}&ref=sr_{random.randint(1, 50)}"
+                f"&sort=relevance")
+
+    if style < 0.78:
+        # Institutional deep subdomains on multi-part suffixes (ac.in, edu, ...).
+        dom = random.choice(LEGIT_INSTITUTIONAL)
+        sub = ".".join(random.choice(["dept", "cse", "ece", "events", "admin",
+                                      "portal", "exam", "registration", "conf"])
+                       for _ in range(random.randint(1, 2)))
+        return (f"{scheme}://{sub}.{dom}/{random.choice(['admission', 'hackathon2026', 'events', 'notices'])}/"
+                f"{random.choice(['register', 'apply', 'login', 'index.html'])}")
+
+    # Legit URLs that genuinely contain 'login'/'secure'/'account' words, so the
+    # model can't use those keywords alone as a phishing signal.
+    host = random.choice(["accounts.google.com", "login.microsoftonline.com",
+                          "secure.bankofamerica.com", "signin.aws.amazon.com",
+                          "myaccount.google.com", "id.atlassian.com",
+                          "login.live.com", "auth.services.adobe.com",
+                          "secure.chase.com", "online.hdfcbank.com"])
+    path = random.choice(["signin/v2/identifier", "login", "oauth2/authorize",
+                          "ServiceLogin", "v3/signin/identifier", "account/login"])
+    return (f"{scheme}://{host}/{path}"
+            f"?service={random.choice(['mail', 'cloud', 'console'])}&continue=%2Fhome")
 
 
 def _rand_word_token(n_min=4, n_max=9):

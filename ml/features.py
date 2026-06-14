@@ -68,7 +68,46 @@ SUSPICIOUS_WORDS = [
     "support", "unlock", "suspended", "recover", "free", "bonus", "gift",
 ]
 
+# Multi-part public suffixes. Without these, a host like
+# "boihackathon.cse.iith.ac.in" would treat ".in" as the TLD and "ac" as the
+# registered domain, badly over-counting subdomains. These are the common
+# country-code second-level suffixes; the list need not be exhaustive.
+MULTI_PART_TLDS = {
+    "co.uk", "ac.uk", "gov.uk", "org.uk", "me.uk", "net.uk", "sch.uk",
+    "co.in", "ac.in", "gov.in", "edu.in", "org.in", "net.in", "res.in", "nic.in",
+    "co.jp", "ac.jp", "go.jp", "or.jp", "ne.jp",
+    "com.au", "net.au", "org.au", "edu.au", "gov.au",
+    "co.nz", "org.nz", "govt.nz",
+    "co.za", "org.za", "gov.za",
+    "com.br", "com.cn", "com.sg", "edu.sg", "gov.sg",
+    "com.mx", "com.tr", "com.hk", "com.tw", "com.my", "com.ph",
+}
+
 _IP_RE = re.compile(r"^(\d{1,3}\.){3}\d{1,3}$")
+_TOKEN_RE = re.compile(r"[a-z0-9]+")
+
+
+def _split_host(hostname: str):
+    """Split a hostname into (subdomain_labels, registered_domain, suffix),
+    correctly handling multi-part suffixes like 'ac.in' / 'co.uk'.
+
+    Returns ([], "", "") for empty/IP hosts.
+    """
+    if not hostname or _IP_RE.match(hostname):
+        return [], hostname, ""
+    parts = hostname.split(".")
+    if len(parts) < 2:
+        return [], hostname, ""
+    # Multi-part suffix (e.g. ac.in) takes two labels; otherwise one.
+    if len(parts) >= 3 and ".".join(parts[-2:]) in MULTI_PART_TLDS:
+        suffix = ".".join(parts[-2:])
+        domain = parts[-3]
+        subdomains = parts[:-3]
+    else:
+        suffix = parts[-1]
+        domain = parts[-2]
+        subdomains = parts[:-2]
+    return subdomains, domain, suffix
 
 
 def _shannon_entropy(s: str) -> float:
@@ -102,12 +141,17 @@ def extract_features(url: str) -> dict:
     path = parsed.path or ""
     query = parsed.query or ""
 
-    host_parts = hostname.split(".") if hostname else []
-    tld = host_parts[-1] if len(host_parts) >= 2 else ""
-    # subdomains = labels beyond domain + tld (e.g. a.b.example.com -> a, b)
-    num_subdomains = max(0, len(host_parts) - 2) if len(host_parts) >= 2 else 0
+    # Split the host with multi-part-suffix awareness so country-code domains
+    # (ac.in, co.uk, ...) don't inflate the subdomain count.
+    subdomains, domain, tld = _split_host(hostname)
+    num_subdomains = len(subdomains)
 
     digits = sum(c.isdigit() for c in raw)
+
+    # Keyword match on word tokens, not raw substrings, so "secure" doesn't
+    # fire inside "secured" and "free" doesn't fire inside "freelancer".
+    raw_tokens = set(_TOKEN_RE.findall(raw.lower()))
+    num_suspicious_words = sum(1 for w in SUSPICIOUS_WORDS if w in raw_tokens)
 
     feats = {
         "url_length": len(raw),
@@ -132,11 +176,11 @@ def extract_features(url: str) -> dict:
         "has_port": int(parsed.port is not None),
         "is_punycode": int("xn--" in hostname),
         "double_slash_in_path": int("//" in path),
-        "prefix_suffix_hyphen": int("-" in (host_parts[-2] if len(host_parts) >= 2 else "")),
+        "prefix_suffix_hyphen": int("-" in domain),
         "tld_length": len(tld),
         "shortening_service": int(hostname in SHORTENERS),
-        "suspicious_tld": int(tld in SUSPICIOUS_TLDS),
-        "num_suspicious_words": sum(w in raw.lower() for w in SUSPICIOUS_WORDS),
+        "suspicious_tld": int(tld.split(".")[-1] in SUSPICIOUS_TLDS),
+        "num_suspicious_words": num_suspicious_words,
         "has_at_redirect": int("@" in raw),
     }
     return feats
